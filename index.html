@@ -232,18 +232,40 @@
             height: 80px; /* Tamaño fijo para el botón redondo */
             border-radius: 50%; /* Hace que el botón sea redondo */
             padding: 0; /* Elimina el padding por defecto */
-            display: flex; /* Usa flexbox para centrar el texto dentro del botón */
+            display: flex; /* Usa flexbox para centrar el contenido (la imagen y el texto) */
             justify-content: center;
             align-items: center;
-            font-size: 1.2em; /* Texto más grande para el botón */
-            background-color: #2ecc71; /* Color verde */
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Sombra mejorada */
+            background-color: #2ecc71; /* Color de fondo del botón si la imagen no carga */
             border: 3px solid white; /* Borde blanco para mayor contraste */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Sombra mejorada */
+            overflow: hidden; /* Oculta cualquier parte de la imagen que se salga */
+            font-size: 1.2em; /* Tamaño de texto para el fallback */
+            color: white; /* Color del texto para el fallback */
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5); /* Sombra para el texto de fallback */
+        }
+
+        /* Estilos para la imagen dentro del botón */
+        #spinButton img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Asegura que la imagen cubra todo el botón */
+            border-radius: 50%; /* Mantiene la imagen redonda */
+            display: block; /* Elimina espacio extra debajo de la imagen */
+            position: absolute; /* Posiciona la imagen absolutamente para que cubra el texto */
+            top: 0;
+            left: 0;
+            z-index: 1; /* La imagen debe estar sobre el texto */
+        }
+
+        /* Ocultar el texto por defecto si la imagen está presente */
+        #spinButton span {
+            position: relative; /* Mantener el texto en el flujo pero debajo de la imagen */
+            z-index: 0; 
         }
 
         #spinButton:hover {
-            background-color: #27ae60;
             transform: translate(-50%, -50%) scale(1.05); /* Ligeramente más grande al pasar el ratón */
+            background-color: #27ae60; /* Cambia el color de fondo en hover */
         }
 
         #spinButton:active {
@@ -252,10 +274,13 @@
         }
 
         #spinButton:disabled {
-            background-color: #bdc3c7;
+            background-color: #bdc3c7; /* Color de fondo si está deshabilitado */
             cursor: not-allowed;
             box-shadow: none;
             transform: translate(-50%, -50%);
+        }
+        #spinButton:disabled img {
+            opacity: 0.5; /* Reduce la opacidad de la imagen cuando está deshabilitado */
         }
 
         .result-display {
@@ -289,7 +314,116 @@
             --color11: #2c3e50; /* Azul muy oscuro */
             --color12: #7f8c8d; /* Gris */
         }
+
+        /* --- Modal Styles --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7); /* Fondo oscuro semitransparente */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000; /* Asegura que esté por encima de todo */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            position: relative;
+            transform: translateY(-20px); /* Efecto de entrada */
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.show .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #444; /* Color de cabecera similar al de la imagen */
+            color: white;
+            padding: 10px 15px;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            margin: -20px -20px 20px -20px; /* Ajusta para que la cabecera cubra los bordes */
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.2em;
+        }
+
+        .modal-close-button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5em;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .modal-winner-name {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #3498db; /* Un color distintivo para el nombre del ganador */
+            margin: 20px 0;
+        }
+
+        .modal-actions {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .modal-actions button {
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .modal-actions .close-btn {
+            background-color: #7f8c8d; /* Gris para el botón Cerrar */
+            color: white;
+            border: none;
+        }
+
+        .modal-actions .close-btn:hover {
+            background-color: #6c7a89;
+        }
+
+        .modal-actions .delete-btn {
+            background-color: #e74c3c; /* Rojo para el botón Suprimir */
+            color: white;
+            border: none;
+        }
+
+        .modal-actions .delete-btn:hover {
+            background-color: #c0392b;
+        }
     </style>
+    <!-- Confetti JS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.4.0/dist/confetti.browser.min.js"></script>
 </head>
 <body>
 
@@ -303,10 +437,12 @@
                     <!-- El SVG y el overlay de texto se generarán aquí con JavaScript -->
                 </div>
                 <!-- El botón Girar ahora está dentro del contenedor de la ruleta -->
-                <button id="spinButton" onclick="spin()">Girar</button>
+                <button id="spinButton" onclick="spin()">
+                    <img src="LOGO-,VDILMAS COLORES2.jpg" alt="Girar" onerror="this.style.display='none'; this.parentNode.querySelector('span').style.display='block';">
+                    <span>Girar</span> <!-- Texto de fallback -->
+                </button>
                 <div class="roulette-pointer"></div>
             </div>
-            <!-- El resultado que estaba aquí ha sido movido a .controls -->
         </div>
 
         <div class="controls">
@@ -321,14 +457,35 @@
 
     </div>
 
+    <!-- Modal HTML Structure -->
+    <div id="winnerModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>¡Tenemos un ganador!</h3>
+                <button class="modal-close-button" onclick="closeModal()">&times;</button>
+            </div>
+            <p id="modalWinnerName" class="modal-winner-name"></p>
+            <div class="modal-actions">
+                <button class="close-btn" onclick="closeModal()">Cerrar</button>
+                <button class="delete-btn" onclick="deleteWinner()">Suprimir</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         /* --- JavaScript --- */
         const roulette = document.querySelector('.roulette');
         const spinButton = document.getElementById('spinButton');
         const namesInput = document.getElementById('namesInput');
         const resultDisplay = document.getElementById('result');
+        const winnerModal = document.getElementById('winnerModal');
+        const modalWinnerName = document.getElementById('modalWinnerName');
 
-        let names = ["Gabriel", "Fatima", "Diya", "Charles", "Beatriz", "Ali", "Hanna"]; // Nombres iniciales
+        // Nombres iniciales para precargar
+        let initialNames = ["Botejo", "des-conocida", "Matitta", "Confidentem", "Alaska"];
+        let names = []; // Los nombres se inicializarán desde initialNames en setupRoulette
+        let currentWinnerIndex = -1; // Para almacenar el índice del ganador actual
+
         let colors = [
             'var(--color1)', 'var(--color2)', 'var(--color3)',
             'var(--color4)', 'var(--color5)', 'var(--color6)',
@@ -475,6 +632,7 @@
             const segmentAngle = 360 / numSegments;
 
             const winnerIndex = Math.floor(Math.random() * numSegments);
+            currentWinnerIndex = winnerIndex; // Guarda el índice del ganador
 
             const additionalRotations = Math.floor(Math.random() * 5) + 5; // Entre 5 y 9 vueltas adicionales completas
 
@@ -492,16 +650,48 @@
                 resultDisplay.textContent = `¡El ganador de tema es: ${winnerName}!`;
                 resultDisplay.classList.add('show');
                 spinButton.disabled = false; 
-
                 rotation = finalRotation % 360; 
                 roulette.style.transition = 'none'; 
                 roulette.style.transform = `rotate(${rotation}deg)`; 
+                
+                // Mostrar el modal y el confeti
+                showWinnerPopup(winnerName);
 
             }, 5000); // Espera 5 segundos (duración de la transición)
         }
 
+        // Función para mostrar el pop-up del ganador y lanzar confeti
+        function showWinnerPopup(winnerName) {
+            modalWinnerName.textContent = winnerName;
+            winnerModal.classList.add('show');
+
+            // Lanzar confeti
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
+        }
+
+        // Función para cerrar el pop-up del ganador
+        function closeModal() {
+            winnerModal.classList.remove('show');
+        }
+
+        // Función para suprimir (eliminar) al ganador de la lista
+        function deleteWinner() {
+            if (currentWinnerIndex !== -1 && names[currentWinnerIndex]) {
+                names.splice(currentWinnerIndex, 1); // Elimina al ganador de la lista
+                namesInput.value = names.join('\n'); // Actualiza el textarea
+                setupRoulette(); // Reconfigura la ruleta con la lista actualizada
+                currentWinnerIndex = -1; // Reinicia el índice del ganador
+            }
+            closeModal(); // Cierra el modal
+        }
+
         // Inicializa la ruleta con los nombres predeterminados al cargar la página
         document.addEventListener('DOMContentLoaded', () => {
+            namesInput.value = initialNames.join('\n'); // Precarga los nombres en el textarea
             setupRoulette(); 
         });
     </script>
