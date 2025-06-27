@@ -487,6 +487,16 @@
         let currentWinnerIndex = -1; // Para almacenar el índice del ganador actual
         let confettiInterval = null; // Variable para almacenar el ID del intervalo de confeti
 
+        // Frases para el mensaje del ganador (ahora solo la "acción")
+        // Hemos duplicado las opciones más comunes para que aparezcan con más frecuencia
+        const winnerTasks = [
+            "un chiste",
+            "un chiste", // Duplicado para mayor probabilidad
+            "un tema",
+            "un tema", // Duplicado para mayor probabilidad
+            "que el dj cante un trazo" // Aparecerá con menos frecuencia ahora
+        ];
+
         let colors = [
             'var(--color1)', 'var(--color2)', 'var(--color3)',
             'var(--color4)', 'var(--color5)', 'var(--color6)',
@@ -648,22 +658,27 @@
 
             setTimeout(() => {
                 const winnerName = names[winnerIndex];
-                resultDisplay.textContent = `¡El ganador de tema es: ${winnerName}!`;
+                // Selecciona una tarea aleatoria
+                const randomTask = winnerTasks[Math.floor(Math.random() * winnerTasks.length)];
+                // Construye el mensaje con el nombre del ganador primero
+                const fullWinnerMessage = `${winnerName}! le toco ${randomTask}!`;
+
+                resultDisplay.textContent = fullWinnerMessage;
                 resultDisplay.classList.add('show');
                 spinButton.disabled = false; 
                 rotation = finalRotation % 360; 
                 roulette.style.transition = 'none'; 
                 roulette.style.transform = `rotate(${rotation}deg)`; 
                 
-                // Mostrar el modal y el confeti
-                showWinnerPopup(winnerName);
+                // Mostrar el modal y el confeti con el mensaje completo
+                showWinnerPopup(fullWinnerMessage);
 
             }, 5000); // Espera 5 segundos (duración de la transición)
         }
 
         // Función para mostrar el pop-up del ganador y lanzar confeti
-        function showWinnerPopup(winnerName) {
-            modalWinnerName.textContent = winnerName;
+        function showWinnerPopup(fullWinnerMessage) { // Recibe el mensaje completo
+            modalWinnerName.textContent = fullWinnerMessage; // Muestra el mensaje completo en el modal
             winnerModal.classList.add('show');
 
             // Lanzar confeti inicialmente
@@ -692,7 +707,7 @@
             winnerModal.classList.remove('show');
             // Detener el confeti cuando el modal se cierra
             if (confettiInterval) {
-                clearInterval(confettiInterval);
+                clearInterval(confettiInterval); // Corregido: eliminado 'conf' extra
                 confettiInterval = null;
             }
         }
