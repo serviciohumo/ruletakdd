@@ -146,7 +146,7 @@
             flex-direction: column;
             gap: 20px;
             align-items: center;
-            width: 100%; /* Ocupa todo el ancho en columna */
+            width: 100%;
             max-width: 350px; /* Tamaño máximo para el textarea */
         }
 
@@ -482,9 +482,10 @@
         const modalWinnerName = document.getElementById('modalWinnerName');
 
         // Nombres iniciales para precargar
-        let initialNames = ["Botejo", "des-conocida", "Matitta", "Confidentem", "Alaska"];
+        let initialNames = ["Botejo", "des-conocida", "Matitta", "Confidentee", "Alaska"];
         let names = []; // Los nombres se inicializarán desde initialNames en setupRoulette
         let currentWinnerIndex = -1; // Para almacenar el índice del ganador actual
+        let confettiInterval = null; // Variable para almacenar el ID del intervalo de confeti
 
         let colors = [
             'var(--color1)', 'var(--color2)', 'var(--color3)',
@@ -665,17 +666,35 @@
             modalWinnerName.textContent = winnerName;
             winnerModal.classList.add('show');
 
-            // Lanzar confeti
+            // Lanzar confeti inicialmente
             confetti({
-                particleCount: 100,
-                spread: 70,
+                particleCount: 150, // Más partículas
+                spread: 100,      // Mayor dispersión
                 origin: { y: 0.6 }
             });
+
+            // Continuar lanzando confeti a intervalos regulares mientras el modal está abierto
+            // Limpiar cualquier intervalo anterior para evitar múltiples intervalos
+            if (confettiInterval) {
+                clearInterval(confettiInterval);
+            }
+            confettiInterval = setInterval(() => {
+                confetti({
+                    particleCount: 50, // Menos partículas para las ráfagas continuas
+                    spread: 80,
+                    origin: { y: 0.6 }
+                });
+            }, 1000); // Cada 1 segundo
         }
 
         // Función para cerrar el pop-up del ganador
         function closeModal() {
             winnerModal.classList.remove('show');
+            // Detener el confeti cuando el modal se cierra
+            if (confettiInterval) {
+                clearInterval(confettiInterval);
+                confettiInterval = null;
+            }
         }
 
         // Función para suprimir (eliminar) al ganador de la lista
