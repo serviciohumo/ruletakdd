@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ruleta de la Suerte</title>
+    <style>
+        /* --- CSS --- */
+        body {
+            font-family: 'Inter', sans-serif; /* Usar Inter como se especifica */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f4f8; /* Color de fondo suave (original) */
+            margin: 0;
+            flex-direction: column; /* Columna para que el título quede arriba */
+            
+            /* Propiedades para la imagen de fondo - ELIMINADAS */
+            /* background-image: url('LOGO-,VDILMAS COLORES2.jpg'); */
+            /* background-size: cover; */
+            /* background-position: center; */
+            /* background-repeat: no-repeat; */
+            /* background-attachment: fixed; */
+        }
+
+        h1 {
+            color: #333; /* Color de texto original (oscuro) */
+            margin-bottom: 25px; /* Espacio debajo del título */
+            margin-top: 30px; /* Espacio arriba del título para que no pegue con el borde superior */
+            font-size: 2.5em; /* Tamaño de título más grande */
+            font-weight: 700;
+            width: 100%; /* Asegura que el título ocupe todo el ancho */
+            text-align: center; /* Centra el título */
+            box-sizing: border-box; /* Incluye padding en el ancho */
+            padding: 0 15px; /* Pequeño padding horizontal para evitar que el texto toque los bordes en pantallas pequeñas */
+            text-shadow: none; /* Sombra eliminada */
+        }
+
+        .container {
+            background-color: white; /* Fondo blanco sólido (original) */
+            padding: 30px;
+            border-radius: 15px; /* Más redondeado */
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1); /* Sombra más pronunciada (original) */
+            text-align: center;
+            width: 90%;
+            max-width: 900px; /* Aumentado el ancho máximo para acomodar dos columnas */
+            margin-bottom: 20px; /* Margen inferior para separar del borde de la pantalla */
+            border: 1px solid #e0e0e0;
+
+            /* Nuevas propiedades para diseño en dos columnas */
+            display: flex;
+            flex-direction: column; /* Por defecto para móviles, luego cambia a row */
+            align-items: center; /* Centra los elementos en columna */
+            gap: 30px; /* Espacio entre las secciones */
+        }
+
+        @media (min-width: 768px) { /* Para pantallas más grandes (tabletas y escritorio) */
+            .container {
+                flex-direction: row; /* Cambia a fila */
+                justify-content: space-around; /* Distribuye el espacio entre los elementos */
+                align-items: flex-start; /* Alinea los elementos al inicio (arriba) de la fila */
+                text-align: left; /* Alinea el texto a la izquierda en modo fila */
+            }
+        }
+
+
+        .roulette-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 350px; /* Asegura un tamaño máximo para la ruleta */
+        }
+
+        @media (min-width: 768px) {
+            .roulette-wrapper {
+                width: 50%; /* Ocupa la mitad del ancho del contenedor */
+                min-width: 300px;
+            }
+        }
+
+        .roulette-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 30px auto;
+            border-radius: 50%;
+            overflow: hidden;
+            background-color: #ccc; /* Fondo base (debería ser cubierto por los segmentos SVG) */
+            border: 5px solid #ddd; /* Borde de la ruleta */
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.2); /* Sombra interior para profundidad */
+        }
+
+        /* El div 'roulette' ahora contendrá el SVG y el overlay de texto */
+        .roulette {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-origin: center center;
+            transition: transform 5s cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+
+        .roulette-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1; /* Para que esté debajo del texto y el botón */
+        }
+
+        .roulette-text-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2; /* Para que el texto esté sobre el SVG */
+        }
+
+        .roulette-text-overlay span {
+            display: block;
+            position: absolute;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+            white-space: nowrap; /* Asegura que el texto se mantenga en una línea */
+            font-size: 1.2em; /* Tamaño de fuente ajustado para mayor visibilidad */
+            line-height: 1.2;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5); /* Sombra para mejor contraste */
+            transform: translate(-50%, -50%); /* Base para transformar el texto y centrarlo en su punto calculado */
+            padding: 0 5px; /* Pequeño padding para el texto */
+            box-sizing: border-box;
+        }
+
+        .roulette-pointer {
+            position: absolute;
+            top: -15px; /* Ajusta la posición del puntero */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 30px solid #e74c3c; /* Flecha roja */
+            z-index: 10;
+        }
+
+        .controls {
+            margin-top: 0; /* Eliminado el margen superior redundante */
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            width: 100%; /* Ocupa todo el ancho en columna */
+            max-width: 350px; /* Tamaño máximo para el textarea */
+        }
+
+        @media (min-width: 768px) {
+            .controls {
+                width: 50%; /* Ocupa la mitad del ancho del contenedor */
+                align-items: flex-start; /* Alinea los elementos a la izquierda */
+            }
+        }
+
+        .input-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+            width: 100%;
+        }
+
+        .input-section h2 { /* Estilo para el nuevo título "Introducir nombres de usuario" */
+            color: #555;
+            font-size: 1.4em;
+            margin-bottom: 10px;
+            text-align: center; /* Centrado en pantallas pequeñas */
+        }
+
+        @media (min-width: 768px) {
+            .input-section {
+                align-items: flex-start; /* Alinea los elementos a la izquierda en modo fila */
+            }
+            .input-section h2 {
+                text-align: left; /* Alinea a la izquierda en pantallas grandes */
+            }
+        }
+
+
+        #namesInput {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            resize: vertical;
+            box-sizing: border-box;
+            font-size: 1em;
+            min-height: 120px; /* Altura mínima aumentada */
+            transition: border-color 0.3s ease;
+        }
+
+        #namesInput:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        button {
+            padding: 12px 25px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        #spinButton {
+            position: absolute; /* Posicionamiento absoluto dentro de .roulette-container */
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%); /* Centra el botón perfectamente */
+            z-index: 15; /* Asegura que esté por encima de los segmentos y el puntero */
+            width: 80px; /* Tamaño fijo para el botón redondo */
+            height: 80px; /* Tamaño fijo para el botón redondo */
+            border-radius: 50%; /* Hace que el botón sea redondo */
+            padding: 0; /* Elimina el padding por defecto */
+            display: flex; /* Usa flexbox para centrar el texto dentro del botón */
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2em; /* Texto más grande para el botón */
+            background-color: #2ecc71; /* Color verde */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Sombra mejorada */
+            border: 3px solid white; /* Borde blanco para mayor contraste */
+        }
+
+        #spinButton:hover {
+            background-color: #27ae60;
+            transform: translate(-50%, -50%) scale(1.05); /* Ligeramente más grande al pasar el ratón */
+        }
+
+        #spinButton:active {
+            transform: translate(-50%, -50%) scale(0.95); /* Ligeramente más pequeño al hacer clic */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        #spinButton:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: translate(-50%, -50%);
+        }
+
+        .result-display {
+            margin-top: 30px; /* Ajusta el margen superior para la nueva posición */
+            font-size: 1.8em; /* Tamaño de resultado más grande */
+            font-weight: bold;
+            color: #e67e22;
+            min-height: 40px;
+            opacity: 0; /* Inicialmente oculto */
+            transition: opacity 0.5s ease;
+            width: 100%; /* Ocupa todo el ancho */
+            text-align: center; /* Asegura que el texto esté centrado */
+        }
+
+        .result-display.show {
+            opacity: 1;
+        }
+
+        /* Colores para los segmentos de la ruleta */
+        :root {
+            --color1: #e74c3c; /* Rojo */
+            --color2: #f1c40f; /* Amarillo */
+            --color3: #3498db; /* Azul */
+            --color4: #2ecc71; /* Verde */
+            --color5: #9b59b6; /* Morado */
+            --color6: #e67e22; /* Naranja */
+            --color7: #1abc9c; /* Turquesa */
+            --color8: #f39c12; /* Naranja oscuro */
+            --color9: #c0392b; /* Rojo oscuro */
+            --color10: #8e44ad; /* Púrpura oscuro */
+            --color11: #2c3e50; /* Azul muy oscuro */
+            --color12: #7f8c8d; /* Gris */
+        }
+    </style>
+</head>
+<body>
+
+    <h1>¡Gira la Ruleta!</h1>
+
+    <div class="container">
+        
+        <div class="roulette-wrapper">
+            <div class="roulette-container">
+                <div class="roulette">
+                    <!-- El SVG y el overlay de texto se generarán aquí con JavaScript -->
+                </div>
+                <!-- El botón Girar ahora está dentro del contenedor de la ruleta -->
+                <button id="spinButton" onclick="spin()">Girar</button>
+                <div class="roulette-pointer"></div>
+            </div>
+            <!-- El resultado que estaba aquí ha sido movido a .controls -->
+        </div>
+
+        <div class="controls">
+            <div class="input-section">
+                <h2>Introducir nombres de usuario</h2>
+                <textarea id="namesInput" placeholder="Ingresa los nombres separados por saltos de línea (ej: Nombre1&#10;Nombre2)"></textarea>
+                <button onclick="setupRoulette()">Configurar Ruleta</button>
+            </div>
+            <!-- El resultado se muestra ahora debajo del botón configurar ruleta -->
+            <div id="result" class="result-display"></div>
+        </div>
+
+    </div>
+
+    <script>
+        /* --- JavaScript --- */
+        const roulette = document.querySelector('.roulette');
+        const spinButton = document.getElementById('spinButton');
+        const namesInput = document.getElementById('namesInput');
+        const resultDisplay = document.getElementById('result');
+
+        let names = ["Gabriel", "Fatima", "Diya", "Charles", "Beatriz", "Ali", "Hanna"]; // Nombres iniciales
+        let colors = [
+            'var(--color1)', 'var(--color2)', 'var(--color3)',
+            'var(--color4)', 'var(--color5)', 'var(--color6)',
+            'var(--color7)', 'var(--color8)', 'var(--color9)',
+            'var(--color10)', 'var(--color11)', 'var(--color12)'
+        ];
+        let rotation = 0; // Grado de rotación actual de la ruleta
+
+        // Función para crear los segmentos de la ruleta
+        function createSegments() {
+            roulette.innerHTML = ''; // Limpia los segmentos anteriores
+
+            // Crea el elemento SVG
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute("class", "roulette-svg");
+            svg.setAttribute("width", "300"); // Ancho del SVG igual al contenedor
+            svg.setAttribute("height", "300"); // Alto del SVG igual al contenedor
+            svg.setAttribute("viewBox", "0 0 300 300"); // Define el sistema de coordenadas interno del SVG
+            roulette.appendChild(svg);
+
+            // Crea el div para superponer el texto
+            const textOverlay = document.createElement('div');
+            textOverlay.classList.add('roulette-text-overlay');
+            roulette.appendChild(textOverlay);
+
+            const numSegments = names.length;
+            if (numSegments === 0) {
+                return;
+            }
+            const segmentAngleDeg = 360 / numSegments; // Ángulo de cada segmento en grados
+            const radius = 150; // Radio de la ruleta (mitad de 300px)
+            const centerX = radius; // Coordenada X del centro del SVG
+            const centerY = radius; // Coordenada Y del centro del SVG
+
+            names.forEach((name, index) => {
+                // Calcula los ángulos para el camino SVG.
+                // SVG usa 0 grados a la derecha, creciendo en sentido horario.
+                // Queremos 0 grados arriba, así que ajustamos -90 grados.
+                const startAngleForSVG = (index * segmentAngleDeg); 
+                const endAngleForSVG = ((index + 1) * segmentAngleDeg);
+
+                const startAngleRadSVG = (startAngleForSVG - 90) * Math.PI / 180;
+                const endAngleRadSVG = (endAngleForSVG - 90) * Math.PI / 180;
+
+                // Calcula los puntos de inicio y fin del arco en la circunferencia
+                const x1 = centerX + radius * Math.cos(startAngleRadSVG);
+                const y1 = centerY + radius * Math.sin(startAngleRadSVG);
+                const x2 = centerX + radius * Math.cos(endAngleRadSVG);
+                const y2 = centerY + radius * Math.sin(endAngleRadSVG);
+
+                // large-arc-flag: 1 si el arco es mayor de 180 grados, 0 si es menor.
+                // sweep-flag: 1 para dibujar el arco en sentido horario, 0 para anti-horario.
+                const largeArcFlag = segmentAngleDeg > 180 ? 1 : 0;
+
+                // Define el path SVG para un segmento de tarta
+                const pathD = [
+                    `M ${centerX},${centerY}`, // Mover al centro
+                    `L ${x1},${y1}`,           // Línea al punto de inicio del arco
+                    `A ${radius},${radius} 0 ${largeArcFlag} 1 ${x2},${y2}`, // Arco (Rx Ry X-rotation large-arc-flag sweep-flag X Y)
+                    `Z`                        // Cerrar el path (línea de vuelta al centro)
+                ].join(' ');
+
+                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path.setAttribute("d", pathD);
+                path.setAttribute("fill", colors[index % colors.length]);
+                path.setAttribute("stroke", "white"); // Borde blanco entre segmentos (opcional)
+                path.setAttribute("stroke-width", "1"); // Ancho del borde
+                svg.appendChild(path);
+
+                // --- Posicionamiento del texto (dentro del textOverlay) ---
+                const text = document.createElement('span');
+                text.textContent = name;
+                
+                // Calcula el ángulo medio visual del segmento para posicionar el texto
+                // Esto representa el ángulo del centro del segmento medido desde la parte superior (0 grados), en sentido horario.
+                const visualMidAngleFromTop = (index * segmentAngleDeg) + (segmentAngleDeg / 2);
+                
+                // Convierte el ángulo medio a radianes para Math.cos/sin (ajustando para que 0 esté a la derecha)
+                const midAngleRadForPosition = (visualMidAngleFromTop - 90) * Math.PI / 180;
+
+                // Posiciona el texto a aproximadamente el 70% del radio desde el centro
+                const textRadius = radius * 0.7; 
+                const textX = centerX + textRadius * Math.cos(midAngleRadForPosition);
+                const textY = centerY + textRadius * Math.sin(midAngleRadForPosition);
+
+                text.style.left = `${textX}px`;
+                text.style.top = `${textY}px`;
+
+                // Calcula la rotación del texto para que coincida con la imagen de referencia.
+                // La fórmula es `90 - ángulo_desde_arriba` para lograr la orientación deseada.
+                const textRotationDeg = 90 - visualMidAngleFromTop;
+                text.style.transform = `translate(-50%, -50%) rotate(${textRotationDeg}deg)`;
+                
+                textOverlay.appendChild(text);
+            });
+        }
+
+        // Función para configurar la ruleta con nombres ingresados
+        function setupRoulette() {
+            const inputText = namesInput.value.trim();
+            if (inputText) {
+                names = inputText.split('\n').map(name => name.trim()).filter(name => name); // Divide por saltos de línea y limpia espacios
+                if (names.length === 0) {
+                    resultDisplay.classList.remove('show'); 
+                    spinButton.disabled = true;
+                    return;
+                }
+
+                // Asegura que el array de colores sea suficiente o se cicla correctamente
+                const baseColors = [
+                    'var(--color1)', 'var(--color2)', 'var(--color3)',
+                    'var(--color4)', 'var(--color5)', 'var(--color6)',
+                    'var(--color7)', 'var(--color8)', 'var(--color9)',
+                    'var(--color10)', 'var(--color11)', 'var(--color12)'
+                ];
+                colors = [];
+                for (let i = 0; i < names.length; i++) {
+                    colors.push(baseColors[i % baseColors.length]);
+                }
+
+                createSegments();
+                resultDisplay.textContent = ''; 
+                resultDisplay.classList.remove('show');
+                spinButton.disabled = false; 
+            } else {
+                resultDisplay.classList.remove('show'); 
+                spinButton.disabled = true;
+            }
+        }
+
+        // Función para girar la ruleta
+        function spin() {
+            if (names.length === 0) {
+                resultDisplay.textContent = "No hay nombres para girar la ruleta. Configúrala primero.";
+                resultDisplay.classList.add('show');
+                return;
+            }
+
+            spinButton.disabled = true; 
+            resultDisplay.textContent = ''; 
+            resultDisplay.classList.remove('show');
+
+            const numSegments = names.length;
+            const segmentAngle = 360 / numSegments;
+
+            const winnerIndex = Math.floor(Math.random() * numSegments);
+
+            const additionalRotations = Math.floor(Math.random() * 5) + 5; // Entre 5 y 9 vueltas adicionales completas
+
+            // Calcula el ángulo exacto para que el centro del segmento ganador aterrice en la parte superior (0 grados, donde está el puntero).
+            let targetMidAngleForWinnerFromTop = (winnerIndex * segmentAngle) + (segmentAngle / 2);
+            let rotationToLand = (360 - (targetMidAngleForWinnerFromTop % 360)) % 360; 
+
+            const finalRotation = (additionalRotations * 360) + rotationToLand;
+
+            roulette.style.transition = 'transform 5s cubic-bezier(0.25, 0.1, 0.25, 1)';
+            roulette.style.transform = `rotate(${finalRotation}deg)`;
+
+            setTimeout(() => {
+                const winnerName = names[winnerIndex];
+                // CAMBIO AQUÍ: "¡El ganador es: " a "¡El ganador de tema es: "
+                resultDisplay.textContent = `¡El ganador de tema es: ${winnerName}!`;
+                resultDisplay.classList.add('show');
+                spinButton.disabled = false; 
+
+                rotation = finalRotation % 360; 
+                roulette.style.transition = 'none'; 
+                roulette.style.transform = `rotate(${rotation}deg)`; 
+
+            }, 5000); // Espera 5 segundos (duración de la transición)
+        }
+
+        // Inicializa la ruleta con los nombres predeterminados al cargar la página
+        document.addEventListener('DOMContentLoaded', () => {
+            setupRoulette(); 
+        });
+    </script>
+</body>
+</html>
